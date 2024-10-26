@@ -4,6 +4,10 @@ local pDataService = {}
 pDataService.ActiveProfiles = {}  
 pDataService.DataStoreKey = "CHANGE_ME"
 
+if pDataService.DataStoreKey == "CHANGE_ME" then
+	warn("pDataService WARNING! - Your data store key is still as from the start we recommend you to CHANGE it! As soon as possible..")
+end
+
 function pDataService:GetDataStore(name)
 	return DataStoreService:GetDataStore(name)
 end
@@ -16,10 +20,18 @@ function pDataService:SaveData(store, key, data)
 end
 
 function pDataService:LoadData(store, key)
-	local success, result = pcall(function()
-		return store:GetAsync(self.DataStoreKey .. key)
-	end)
-	return success and result or nil
+	local success, result
+	for i = 1, 3 do  
+		success, result = pcall(function()
+			return store:GetAsync(self.DataStoreKey .. key)
+		end)
+		if success then
+			return result
+		else
+			wait(2)
+		end
+	end
+	return nil  
 end
 
 function pDataService:RetrySave(store, key, data, attempts)
