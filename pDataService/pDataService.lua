@@ -2,6 +2,7 @@ local DataStoreService = game:GetService("DataStoreService")
 
 local pDataService = {}
 pDataService.ActiveProfiles = {}  
+pDataService.DataStoreKey = "CHANGE_ME"
 
 function pDataService:GetDataStore(name)
 	return DataStoreService:GetDataStore(name)
@@ -9,14 +10,14 @@ end
 
 function pDataService:SaveData(store, key, data)
 	local success, result = pcall(function()
-		store:SetAsync(key, data)
+		store:SetAsync(self.DataStoreKey .. key, data)
 	end)
 	return success, result
 end
 
 function pDataService:LoadData(store, key)
 	local success, result = pcall(function()
-		return store:GetAsync(key)
+		return store:GetAsync(self.DataStoreKey .. key)
 	end)
 	return success and result or nil
 end
@@ -33,12 +34,11 @@ end
 
 function pDataService:LoadProfile(playerId, defaultData)
 	if self.ActiveProfiles[playerId] then
-		return nil 
+		return nil
 	end
 
 	local profileStore = self:GetDataStore("PlayerProfiles")
-	local data = self:LoadData(profileStore, playerId) or defaultData
-
+	local data = self:LoadData(profileStore, tostring(playerId)) or defaultData
 
 	self.ActiveProfiles[playerId] = {data = data, locked = true}
 	return data
@@ -47,25 +47,25 @@ end
 function pDataService:SaveProfile(playerId)
 	local profile = self.ActiveProfiles[playerId]
 	if profile then
-		self:SaveData(self:GetDataStore("PlayerProfiles"), playerId, profile.data)
-		profile.locked = false 
+		self:SaveData(self:GetDataStore("PlayerProfiles"), tostring(playerId), profile.data)
+		profile.locked = false
 	end
 end
 
 function pDataService:ReleaseProfile(playerId)
 	if self.ActiveProfiles[playerId] then
-		self.ActiveProfiles[playerId] = nil 
+		self.ActiveProfiles[playerId] = nil
 	end
 end
 
 function pDataService:SaveGlobalData(key, data)
 	local store = self:GetDataStore("GlobalData")
-	self:RetrySave(store, key, data, 3)
+	self:RetrySave(store, self.DataStoreKey .. key, data, 3)
 end
 
 function pDataService:LoadGlobalData(key)
 	local store = self:GetDataStore("GlobalData")
-	return self:LoadData(store, key)
+	return self:LoadData(store, self.DataStoreKey .. key)
 end
 
 return pDataService
